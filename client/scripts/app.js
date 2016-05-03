@@ -1,16 +1,20 @@
 // YOUR CODE HERE:
+var entityMap = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': '&quot;',
+  "'": '&#39;',
+  "/": '&#x2F;'
+};
+
+var escapeHtml = string => String(string).replace(/[&<>"'\/]/g, s => entityMap[s]);
+
 var url = 'https://api.parse.com/1/classes/messages';
 var users;
-var app = {
+var app =  {
   init: function () {
-    $.get(url, function(data) { 
-      users = data.results.reverse();
-      _.each(users, function(messageObj) {
-        app.addMessage(messageObj);
-      });
-
-
-    });
+    app.fetch();
   },
 
   send: function(message) {
@@ -26,25 +30,30 @@ var app = {
   },
 
   fetch: function() {
-    $.ajax({
-      type: 'GET'
+    app.clearMessages();
+    $.get(url, function(data) { 
+      users = data.results.reverse();
+      _.each(users, function(messageObj) {
+        app.addMessage(messageObj);
+      });
 
     });
   },
-
+ 
   addMessage: function(message) {
     if (message.username) {
-      $('#chats').append(`<div class='username' data-username=${message.username}>${message.username}:
-        ${message.text}</div>`);
+      $('#chats').append(`<div class='username' data-username=${escapeHtml(message.username)}>${escapeHtml(message.username)}:
+        ${JSON.parse(JSON.stringify(escapeHtml(message.text)))}</div>`);
     }
   },
 
   clearMessages: function() {
+    console.log('cleared!');
     $('#chats').empty();
   },
 
   addRoom: function(roomName) {
-    $('#roomSelect').append(`<div>${roomName}</div>`);
+    $('#roomSelect').append(`<div>${escapeHtml(roomName)}</div>`);
   },
 
   addFriend: function(username) {
@@ -52,11 +61,27 @@ var app = {
       app.friends.push(username);
     }
   },
+  handleSubmit: function() {
+    var message = $('#message').val();
+    var userName = $('#user').val();
+
+    var userObject = {
+      username: userName,
+      text: message
+    };
+    app.send(userObject);
+
+    $('#message').val('');
+  
+    return false;
+  },
   
   friends: []
 };
 
 app.init();
+
+
 
 
 $(document).ready(function() {
@@ -66,9 +91,12 @@ $(document).ready(function() {
     app.addFriend(friend);
   });
   
- 
+  $('#send').on('click', app.handleSubmit);
+  
 
-
+  setInterval(function() {
+    app.fetch();
+  }, 4000);
 
 });
 //button on click(this, addFreind())
