@@ -16,26 +16,29 @@
   </head>
   <body>
     <div class="container">
+      <h1 id="header" ><img src="http://nintendonuggets.com/media/2015/04/Pokemon-Pikachu-Smile-Wallpaper-HD-ForWallpapers_com_.png">PIKACHAT</h1>
 
-      <div id="main">
-        <h1 class='jumbotron'>Chatter F'in Box</h1>
-        <div id="rooms">
-          <input type="text" value="room" id="newRoom">
-           <input id='roomSend' class='roomSubmit' type="submit" value="roomSubmit">
-
-          Room:
+      <div id="main" class='row'>
+        <div id="rooms" class='col-md-12 text-center'>
+          <input type="text"  id="newRoom" placeholder='Create a new room!'>
+           <input class="btn-info" id='roomSend' class='roomSubmit' type="submit" value="Create Room">
           <select id="roomSelect" >
           </select>
         </div>
       </div>  
+
+
       <!-- Your HTML goes here! -->
-    
-    <div id="chats"></div>
-    <form>
-      <input type="username" name="username" placeholder="username" id="user">
-      <input type='text' name="text" placeholder="message" id="message">
-      <input id='send' class='submit' type="submit" value="Submit">
-    </form>
+      <div id="chats"></div>
+      <!-- Your HTML goes here! -->
+
+
+      <form>
+        <input type="username" name="username" placeholder=" User Name" id="user">
+        <input type='text' name="text" placeholder=" Write your message..." id="message">
+        <input id='send' class='submit btn btn-primary' type="submit" value="Submit">
+      </form>
+
     </div>
   </body>
 </html>

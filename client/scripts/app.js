@@ -20,8 +20,6 @@ var app = {
     app.fetch(app.initialize);
   },
 
-
-
   send: function(message, callback) {
     $.ajax({
       url: url,
@@ -36,23 +34,20 @@ var app = {
     });
   },
 
-
-
   fetch: function(callback, optionalStr) {
     $.ajax({
       type: "GET",
       url: url,
       data: {order: '-createdAt'},
       dataType: "json",
-      success: function(response) {
-        callback(response.results, optionalStr);
+      success: function(data) {
+        callback(data.results, optionalStr);
       }
     });
   },
 
-
   initialize: function(chatObj) {
-    for (var i = 100; i > 80; i--) {
+    for (var i = 100; i > 87; i--) {
       app.addMessage(chatObj[chatObj.length - i]);
     }
 
@@ -68,13 +63,12 @@ var app = {
 
   },
 
-
   refresh: function(co) {
     //co is chatObject
     app.clearMessages();
 
     var i = co.length;
-    var len = co.length - 20 < 0 ? 0 : co.length - 20;
+    var len = co.length - 13 < 0 ? 0 : co.length - 13;
 
     for (; i > len; i--) {
       app.addMessage(co[co.length - i]);
@@ -90,7 +84,7 @@ var app = {
     var userObject = {
       username: userName,
       text: message,
-      roomname: roomname
+      roomname: roomname,
     };
 
     app.send(userObject, app.filterRoom);
@@ -127,16 +121,27 @@ var app = {
   handleNewRoom: function() {
     var roomname = $('#newRoom').val();
     app.addRoom(roomname);
+    $('#newRoom').val('')
   },
 
 
 
   addMessage: function(message) {
     // console.log(JSON.stringify(message));
-    if (message.username) {
-      $('#chats').prepend(`<div class='username' data-username=${escapeHtml(message.username)}>${escapeHtml(message.username)}:
-        ${JSON.parse(JSON.stringify(escapeHtml(message.text)))}</div>`);
+    _.each(app.friends, function(friend) {
+      if (friend === message.username) {
+        message.friend = 'friend';
+      } 
+    });
+
+    if (message.username && message.friend) {
+      $('#chats').prepend(`<div class='alert alert-success'><div class='username friend' data-username=${escapeHtml(message.username)}>${escapeHtml(message.username)}:</div><div class='texts'>
+        ${JSON.parse(JSON.stringify(escapeHtml(message.text)))}</div></div>`);
+    } else if (message.username && message.text) {
+      $('#chats').prepend(`<div class='alert alert-success'><div class='username' data-username=${escapeHtml(message.username)}>${escapeHtml(message.username)}:</div><div class='texts'>
+        ${JSON.parse(JSON.stringify(escapeHtml(message.text)))}</div></div>`);
     }
+    
   },
 
   clearMessages: function() {
