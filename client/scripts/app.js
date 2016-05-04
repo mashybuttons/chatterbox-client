@@ -1,5 +1,4 @@
-// YOUR CODE HERE:
-var entityMap = {
+let entityMap = {
   "&": "&amp;",
   "<": "&lt;",
   ">": "&gt;",
@@ -7,81 +6,74 @@ var entityMap = {
   "'": '&#39;',
   "/": '&#x2F;'
 };
+let escapeHtml = string => String(string).replace(/[&<>"'\/]/g, s => entityMap[s]);
+let rooms = {};
 
-var escapeHtml = string => String(string).replace(/[&<>"'\/]/g, s => entityMap[s]);
+let app = {
 
-var url = 'https://api.parse.com/1/classes/messages';
-var startIndex;
-var users;
-var rooms = {};
-var app = {
-
-  init: function () {
+  init() {
     app.fetch(app.initialize);
   },
 
-  send: function(message, callback) {
+
+  send(message, callback) {
     $.ajax({
-      url: url,
+      url: app.server,
       type: 'POST',
       data: JSON.stringify(message),
-      success: function(data, response) {
-        var selectedRoom = $('#roomSelect :selected').val();
-
-        //app.fetch(app.refresj_)
+      success(data, response) {
+        let selectedRoom = $('#roomSelect :selected').val();
         app.fetch(callback, selectedRoom);
       },
     });
   },
 
-  fetch: function(callback, optionalStr) {
+
+  fetch(callback, optionalStr) {
     $.ajax({
-      type: "GET",
-      url: url,
+      type: 'GET',
+      url: app.server,
       data: {order: '-createdAt'},
-      dataType: "json",
-      success: function(data) {
+      dataType: 'json',
+      success(data) {
         callback(data.results, optionalStr);
       }
     });
   },
 
-  initialize: function(chatObj) {
-    for (var i = 100; i > 87; i--) {
+
+  initialize(chatObj) {
+    for (let i = 100; i > 90; i--) {
       app.addMessage(chatObj[chatObj.length - i]);
     }
 
-    _.each(chatObj, function(messageObj) {
-      if (rooms[messageObj.roomname]) {
-        rooms[messageObj.roomname].push(messageObj);
-      } else {
-        rooms[messageObj.roomname] = [];
+    _.each(chatObj, messageObj => {
+      let roomName = messageObj.roomname;
+      if (rooms[roomName]) {
+        rooms[roomName].push(messageObj);
+      } else if (roomName !== undefined) {
+        rooms[roomName] = [];
       }
     });
 
     _.each(rooms, (room, key, collection) => app.addRoom(key));
-
   },
 
-  refresh: function(co) {
+
+  refresh(co) {
     //co is chatObject
     app.clearMessages();
 
-    var i = co.length;
-    var len = co.length - 13 < 0 ? 0 : co.length - 13;
-
-    for (; i > len; i--) {
+    //len defaults to 0 if subtracting max chat brings index below 0.
+    for (let i = co.length, len = co.length - 10 < 0 ? 0 : co.length - 10; i > len; i--) {
       app.addMessage(co[co.length - i]);
     }
-
   },
 
-  handleSubmit: function() {
-    var message = $('#message').val();
-    var userName = $('#user').val();
-    var roomname = $('#roomSelect :selected').val();
 
-    var userObject = {
+  handleSubmit() {
+    let [message, userName, roomname] = [$('#message').val(), $('#user').val(), $('#roomSelect :selected').val()];
+    let userObject = {
       username: userName,
       text: message,
       roomname: roomname,
@@ -94,81 +86,79 @@ var app = {
     return false;
   },
   
-  filterRoom: function(co, roomName) {
+
+  filterRoom(co, roomName) {
     //co is chatObject
     app.clearMessages();
-
-    var filteredRoom = _.filter(co, (object) =>  object.roomname === roomName);
-
+    let filteredRoom = _.filter(co, object => object.roomname === roomName);
     app.refresh(filteredRoom);
   },
    
 
-  addRoom: function(roomName) {
+  addRoom(roomName) {
     if ($(`#roomSelect option[value="${roomName}"]`).length <= 0) {
       $('#roomSelect').append(`<option value="${roomName}" id='${roomName}'>${escapeHtml(roomName)}</option>`); 
     }
-    
   },
 
-  addFriend: function(username) {
+
+  addFriend(username) {
     if (!_.contains(app.friends, username)) {
       app.friends.push(username);
     }
   },
 
 
-  handleNewRoom: function() {
-    var roomname = $('#newRoom').val();
+  handleNewRoom() {
+    let roomname = $('#newRoom').val();
     app.addRoom(roomname);
-    $('#newRoom').val('')
+    $('#newRoom').val('');
   },
 
 
+  addMessage(message) {
+    let userText = escapeHtml(message.text);
+    let userName = escapeHtml(message.username);
 
-  addMessage: function(message) {
-    // console.log(JSON.stringify(message));
-    _.each(app.friends, function(friend) {
+    _.each(app.friends, friend =>{
       if (friend === message.username) {
         message.friend = 'friend';
       } 
     });
 
-    if (message.username && message.friend) {
-      $('#chats').prepend(`<div class='alert alert-success'><div class='username friend' data-username=${escapeHtml(message.username)}>${escapeHtml(message.username)}:</div><div class='texts'>
-        ${JSON.parse(JSON.stringify(escapeHtml(message.text)))}</div></div>`);
-    } else if (message.username && message.text) {
-      $('#chats').prepend(`<div class='alert alert-success'><div class='username' data-username=${escapeHtml(message.username)}>${escapeHtml(message.username)}:</div><div class='texts'>
-        ${JSON.parse(JSON.stringify(escapeHtml(message.text)))}</div></div>`);
-    }
+    //Attaches class 'friend' to create bold/colored indicator if clicking on friend's username
+    if (userName && message.friend) {
+      $('#chats').prepend(`<div class='alert alert-success'><div class='username friend' data-username=${userName}>${userName}:</div><div class='texts'>
+        ${userText}</div></div>`);
     
+    //Otherwise append div without the 'friend' class
+    } else if (userName && message.text) {
+      $('#chats').prepend(`<div class='alert alert-success'><div class='username' data-username=${userName}>${userName}:</div><div class='texts'>
+        ${userText}</div></div>`);
+    }
   },
 
-  clearMessages: function() {
+
+  clearMessages() {
     $('#chats').empty();
   },
 
 
-  clearRooms: function() {
-    $('#roomSelect').empty();
-  },
-
   friends: [],
+  
 
-
-  server: url
+  server: 'https://api.parse.com/1/classes/messages'
 
 //End app object
 };
 
-app.init();
 
+$(document).ready(() => {
 
-
-$(document).ready(function() {
+  app.init();
 
   $('#chats').on('click', '.username', function() {
-    var friend = ($(this).data('username'));
+    let friend = ($(this).data('username'));
     app.addFriend(friend);
   });
   
@@ -176,19 +166,19 @@ $(document).ready(function() {
 
   $('#roomSend').on('click', app.handleNewRoom);
   
-  $('#roomSelect').on('change', function(room) {
-    var selectedRoom = $('#roomSelect :selected').val();
+  $('#roomSelect').on('change', room => {
+    let selectedRoom = $('#roomSelect :selected').val();
 
     app.fetch(app.filterRoom, selectedRoom);
 
   });
 
 
-  setInterval(function() {
-    console.log('Refresh!');
-    var selectedRoom = $('#roomSelect :selected').val();
+  setInterval(() => {
+    let selectedRoom = $('#roomSelect :selected').val();
+
     app.fetch(app.filterRoom, selectedRoom);
-  }, 2000);
+  }, 1000);
 
 });
 //button on click(this, addFreind())
